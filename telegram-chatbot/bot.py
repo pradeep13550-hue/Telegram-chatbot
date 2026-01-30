@@ -596,3 +596,49 @@ Use /new to clear your history.
         """Run the bot"""
         try:
             # Initialize components
+            await self.initialize_components()
+            
+            # Create Application
+            self.application = (
+                Application.builder()
+                .token(config.TELEGRAM_TOKEN)
+                .post_shutdown(self.shutdown)
+                .build()
+            )
+            
+            # Setup handlers
+            self.setup_handlers()
+            
+            # Start the bot
+            logger.info("🤖 Bot is starting...")
+            await self.application.initialize()
+            await self.application.start()
+            
+            # Start polling
+            await self.application.updater.start_polling(
+                allowed_updates=Update.ALL_TYPES,
+                drop_pending_updates=True
+            )
+            
+            logger.info("✅ Bot is running. Press Ctrl+C to stop.")
+            
+            # Keep running until interrupted
+            while True:
+                await asyncio.sleep(3600)  # Sleep for 1 hour
+            
+        except asyncio.CancelledError:
+            logger.info("Bot stopped by user")
+        except Exception as e:
+            logger.error(f"Failed to run bot: {e}")
+            raise
+        finally:
+            if self.application:
+                await self.application.stop()
+
+async def main():
+    """Main function"""
+    bot = TelegramDeepSeekBot()
+    await bot.run()
+
+if __name__ == "__main__":
+    asyncio.run(main())
